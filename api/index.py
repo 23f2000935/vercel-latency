@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import json, os
 import numpy as np
 
 app = Flask(__name__)
+CORS(app)  # This handles ALL CORS automatically
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), '..', 'q-vercel-latency.json')
 with open(DATA_PATH) as f:
@@ -10,14 +12,6 @@ with open(DATA_PATH) as f:
 
 @app.route('/api', methods=['POST', 'OPTIONS'])
 def analytics():
-    # Handle CORS preflight
-    if request.method == 'OPTIONS':
-        response = jsonify({})
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-        return response, 200
-
     body = request.get_json()
     regions = body.get("regions", [])
     threshold_ms = body.get("threshold_ms", 180)
@@ -37,8 +31,4 @@ def analytics():
             "breaches":    int(sum(1 for l in latencies if l > threshold_ms))
         }
 
-    response = jsonify(result)
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-    return response, 200
+    return jsonify(result)
